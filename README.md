@@ -4,7 +4,7 @@
   <h1>Bicicletário API</h1>
   
   <p>
-    API para gestão de bicicletários utilizando FastAPI 🚴‍♀️📊<br>
+    API para gestão de bicicletários utilizando FastAPI 🚴‍♀️<br>
   </p>
   
 <!-- Badges -->
@@ -78,7 +78,7 @@ tests/test_hello.py
 Com o ambiente ativado via `poetry`, execute:
 
 ```bash
-PYTHONPATH=. poetry run pytest
+PYTHONPATH=. poetry run pytest -s
 ```
 
 ---
