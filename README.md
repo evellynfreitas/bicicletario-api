@@ -75,10 +75,10 @@ tests/test_hello.py
 
 ### ▶️ Executar testes:
 
-Com o ambiente ativado via `poetry`, execute:
+Com o ambiente virtual ativado, execute:
 
 ```bash
-PYTHONPATH=. poetry run pytest -s
+pytest -s
 ```
 
 ---
@@ -88,7 +88,6 @@ PYTHONPATH=. poetry run pytest -s
 ### 📋 Pré-requisitos
 
 - Python >=3.9
-- [Poetry](https://python-poetry.org/docs/#installation)
 - Git
 
 ### 📦 Instalar e executar:
@@ -98,11 +97,15 @@ PYTHONPATH=. poetry run pytest -s
 git clone https://github.com/evellynfreitas/bicicletario-api.git
 cd bicicletario-api
 
-# Instalar dependências
-poetry install
+# Criar o ambiente virtual
+python -m venv venv
 
-# Rodar o servidor
-poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Ativar o ambiente virtual
+venv\scripts\activate
+
+# Instalar dependências
+pip install -r requirements.txt
+
 ```
 
 ---
