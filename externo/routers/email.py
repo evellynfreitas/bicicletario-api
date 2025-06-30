@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from services.email import enviar_email2, enviar_gmail
+from services.email import enviar_gmail
 
 router = APIRouter(prefix="/email", tags=["email"])
 
