@@ -4,6 +4,8 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'equipamento')))
 
+TOTEM_NAO_ENCONTRADO = "Totem não encontrado"
+
 def cadastrar_totem(request, db):
     try:
         novo_totem = Totem(
@@ -23,7 +25,7 @@ def editar_totem(request, db):
     cadastro_totem = db.query(Totem).filter(Totem.numero == request.numero).first()
 
     if cadastro_totem is None:
-        return {"success": False, "detail": "Totem não encontrado"}
+        return {"success": False, "detail": TOTEM_NAO_ENCONTRADO}
     
     if request.localizacao:
         cadastro_totem.localizacao = request.localizacao
@@ -41,9 +43,9 @@ def editar_totem(request, db):
 def retorna_totem(numero, db):
     totem = db.query(Totem).filter(Totem.numero == numero).first()
     if totem is None:
-        return {"success": False, "detail": "Totem não encontrado"}
+        return {"success": False, "detail": TOTEM_NAO_ENCONTRADO}
     
-    return {"success": True, "detail": "Totem encontrado", "totem": totem}
+    return {"success": True, "detail": TOTEM_NAO_ENCONTRADO, "totem": totem}
 
 def lista_totens(db):
     totens = db.query(Totem).all()
@@ -53,7 +55,7 @@ def deleta_totem(numero, db):
     totem = db.query(Totem).filter(Totem.numero == numero).first()
 
     if totem is None:
-        return {"success": False, "detail": "Totem não encontrado"}
+        return {"success": False, "detail": TOTEM_NAO_ENCONTRADO}
     
     db.delete(totem)
     db.commit()

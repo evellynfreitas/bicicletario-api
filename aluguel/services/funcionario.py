@@ -1,11 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from typing import List
 from models import Funcionario
-from database import get_db
 import re
-from datetime import datetime
 
+FUNCIONARIO_NAO_ENCONTRADO = "Funcionário não encontrado"
 
 def existe_email(email: str, db: Session) -> bool:
     cadastrado = db.query(Funcionario).filter(Funcionario.email == email).first()
@@ -50,7 +47,7 @@ def edita_funcionario(funcionario, db):
     cadastro_funcionario = db.query(Funcionario).filter(Funcionario.matricula == funcionario.matricula).first()
 
     if cadastro_funcionario is None:
-        return {"success": False, "detail": "Funcionário não encontrado"}
+        return {"success": False, "detail": FUNCIONARIO_NAO_ENCONTRADO}
     
     if funcionario.nome:
         cadastro_funcionario.nome = funcionario.nome
@@ -89,7 +86,7 @@ def edita_funcionario(funcionario, db):
 def retorna_funcionario(matricula, db):
     funcionario = db.query(Funcionario).filter(Funcionario.matricula == matricula).first()
     if funcionario is None:
-        return {"success": False, "detail": "Funcionário não encontrado"}
+        return {"success": False, "detail": FUNCIONARIO_NAO_ENCONTRADO}
     
     return {"success": True, "detail": "Funcionário encontrado", "funcionario": funcionario}
 
@@ -103,7 +100,7 @@ def deleta_funcionario(matricula, db):
     funcionario = db.query(Funcionario).filter(Funcionario.matricula == matricula).first()
 
     if funcionario is None:
-        return {"success": False, "detail": "Funcionário não encontrado"}
+        return {"success": False, "detail": FUNCIONARIO_NAO_ENCONTRADO}
     
     db.delete(funcionario)
     db.commit()
