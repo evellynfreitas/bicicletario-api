@@ -28,7 +28,7 @@ API para gerenciamento de bicicletários, permitindo controle de acessos, relat�
 | Uvicorn         | Servidor ASGI para rodar o FastAPI     |
 | Pandas          | Manipulação e análise de dados         |
 | Pytest          | Testes automatizados                   |
-| Poetry          | Gerenciador de dependências e ambiente |
+
 
 ### 📦 Instaladas via `pyproject.toml`:
 
