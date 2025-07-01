@@ -1,4 +1,3 @@
-
 <div align="center">
 
   <h1>Bicicletário API</h1>
@@ -17,6 +16,12 @@
 
 API para gerenciamento de bicicletários, permitindo controle de acessos, relatórios, estatísticas e muito mais. Construída com **FastAPI** para alta performance, utilizando boas práticas de desenvolvimento e testes automatizados com **Pytest**.
 
+Este projeto é dividido em **três APIs independentes**, organizadas em microsserviços:
+
+- 🔧 `equipamento` – gestão de bicicletas e equipamentos;
+- 👤 `aluguel` – controle de usuários e empréstimos;
+- 🌐 `externo` – integração e funcionalidades públicas.
+
 ---
 
 ## ⚙️ Tecnologias e Dependências
@@ -29,29 +34,18 @@ API para gerenciamento de bicicletários, permitindo controle de acessos, relat�
 | Pandas          | Manipulação e análise de dados         |
 | Pytest          | Testes automatizados                   |
 
-
-### 📦 Instaladas via `pyproject.toml`:
-
-```toml
-[tool.poetry.dependencies]
-python = ">=3.9,<3.13"
-fastapi = ">=0.115.12,<0.116.0"
-uvicorn = ">=0.34.3,<0.35.0"
-pandas = ">=2.2.3,<3.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.0"
-```
+As dependências estão listadas no arquivo `requirements.txt`.
 
 ---
 
-## ☁️ Hospedagem na Nuvem (AWS)
+## ☁️ Hospedagem na Nuvem (Render)
 
-A aplicação está hospedada em uma instância EC2 da Amazon Web Services (AWS), permitindo o acesso remoto da API em produção.
+A aplicação está hospedada na plataforma **[Render](https://render.com/)**, permitindo o acesso remoto das APIs em produção.
 
 🔗 Acesse a documentação da API via Swagger:  
-👉 [http://3.138.108.109:8000/docs](http://3.138.108.109:8000/docs)
-
+👉 [API Externa](https://bicicletario-api.onrender.com/docs)
+👉 [API Aluguel](https://bicicletario-api-aluguel.onrender.com/docs)
+👉 [API Equipamentos](https://bicicletario-api-equipamento.onrender.com/docs)
 ---
 
 ## 🔎 Revisão de Código
@@ -61,21 +55,20 @@ Este projeto utiliza o [**SonarCloud**](https://sonarcloud.io/) para análise es
 🔍 **Dashboard do SonarCloud:**  
 👉 [SonarCloud - bicicletario-api](https://sonarcloud.io/project/overview?id=evellynfreitas_bicicletario-api)
 
+
 ---
 
 ## 🧪 Testes Automatizados
 
 Utilizamos `pytest` para validar o comportamento da aplicação com testes automatizados.
 
-📁 O arquivo de testes de exemplo está localizado em:
+📁 Os arquivo de testes estão dentro das pastas "tests" em cada API
 
-```
-tests/test_hello.py
-```
+---
 
 ### ▶️ Executar testes:
 
-Com o ambiente virtual ativado, execute:
+Com o ambiente virtual ativado e dentro de alguma API, execute:
 
 ```bash
 pytest -s
@@ -112,9 +105,7 @@ pip install -r requirements.txt
 
 ## 👥 Contribuidores
 
-<a href="https://github.com/evellynfreitas/bicicletario-api/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=evellynfreitas/bicicletario-api" />
-</a>
+
 
 ---
 
