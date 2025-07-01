@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from schemas import FuncionarioRequest, FuncionarioResponse, FuncionarioUpdate
 from database import get_db
-from services.funcionario import *
+from services.funcionario import lista_funcionarios, cadastra_funcionario, edita_funcionario, retorna_funcionario, deleta_funcionario
 
 router = APIRouter(prefix="/funcionario", tags=["funcionario"])
 

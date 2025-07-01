@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from schemas import BicicletaRequest, BicicletaResponse, BicicletaUpdate
 from database import get_db
-from services.bicicleta import *
+from services.bicicleta import cadastrar_bicicleta, editar_bicicleta, lista_bicicletas, retorna_bicicleta, deleta_bicicleta
 
 router = APIRouter(prefix="/bicicleta", tags=["bicicleta"])
 

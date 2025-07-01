@@ -17,9 +17,8 @@ def valida_documento(nacionalidade: str, cpf: str, passaporte: str) -> bool:
         return cpf is not None
     return passaporte is not None
 
-def valida_cartao(cartao) -> bool:
-    # Placeholder — lógica de validação real pode ser adicionada aqui
-    return True
+#def valida_cartao(cartao) -> bool:
+#    return True
 
 def envia_email_cadastro(email: str):
     print(f"Enviei o email de confirmação para {email}.")
@@ -34,8 +33,8 @@ def cria_ciclista(request: CiclistaRequest, db: Session) -> Ciclista:
     if not valida_documento(request.nacionalidade, request.cpf, request.passaporte):
         raise HTTPException(status_code=400, detail="Documentos não preenchidos corretamente")
 
-    if not valida_cartao(request.cartao_de_credito):
-        raise HTTPException(status_code=400, detail="Cartão de crédito inválido")
+    #if not valida_cartao(request.cartao_de_credito):
+    #    raise HTTPException(status_code=400, detail="Cartão de crédito inválido")
 
     novo_ciclista = Ciclista(
         nome=request.nome,
