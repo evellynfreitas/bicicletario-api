@@ -16,7 +16,7 @@ def cadastrar_totem(request, db):
 
         return {"success": True, "detail": "Novo totem cadastrado com sucesso"}
 
-    except Exception as ex:
+    except Exception:
         return {"success": False, "detail": "Não foi possível cadastrar o novo totem"}
 
 def editar_totem(request, db):

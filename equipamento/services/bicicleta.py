@@ -17,7 +17,7 @@ def cadastrar_bicicleta(request, db):
 
         return {"success": True, "detail": "Nova bicicleta cadastrada com sucesso"}
 
-    except Exception as ex:
+    except Exception:
         return {"success": False, "detail": "Não foi possível cadastrar a nova bicicleta"}
 
 def editar_bicicleta(request, db):

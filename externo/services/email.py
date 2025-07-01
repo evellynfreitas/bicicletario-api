@@ -16,6 +16,6 @@ def enviar_gmail(destinatario, assunto, mensagem):
         )
         return True
     
-    except Exception as ex:
+    except Exception:
         print(ex)
         return False

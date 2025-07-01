@@ -1,9 +1,11 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from models import Ciclista, CartaoDeCredito
-from schemas import CiclistaRequest, CiclistaResponse, CiclistaUpdate
+from schemas import CiclistaRequest, CiclistaUpdate
 from datetime import datetime
 import re
+
+CICLISTA_NAO_ENCONTRADO = "Ciclista não encontrado"
 
 def verifica_email_cadastrado(email: str, db: Session) -> bool:
     return db.query(Ciclista).filter(Ciclista.email == email).first() is not None
@@ -17,9 +19,6 @@ def valida_documento(nacionalidade: str, cpf: str, passaporte: str) -> bool:
         return cpf is not None
     return passaporte is not None
 
-#def valida_cartao(cartao) -> bool:
-#    return True
-
 def envia_email_cadastro(email: str):
     print(f"Enviei o email de confirmação para {email}.")
 
@@ -32,9 +31,6 @@ def cria_ciclista(request: CiclistaRequest, db: Session) -> Ciclista:
 
     if not valida_documento(request.nacionalidade, request.cpf, request.passaporte):
         raise HTTPException(status_code=400, detail="Documentos não preenchidos corretamente")
-
-    #if not valida_cartao(request.cartao_de_credito):
-    #    raise HTTPException(status_code=400, detail="Cartão de crédito inválido")
 
     novo_ciclista = Ciclista(
         nome=request.nome,
@@ -65,13 +61,13 @@ def cria_ciclista(request: CiclistaRequest, db: Session) -> Ciclista:
 def busca_ciclista_por_id(ciclista_id: int, db: Session) -> Ciclista:
     ciclista = db.query(Ciclista).filter(Ciclista.id == ciclista_id).first()
     if not ciclista:
-        raise HTTPException(status_code=400, detail="Ciclista não encontrado")
+        raise HTTPException(status_code=400, detail=CICLISTA_NAO_ENCONTRADO)
     return ciclista
 
 def atualiza_ciclista(ciclista_id: int, dados: CiclistaUpdate, db: Session) -> Ciclista:
     ciclista = db.query(Ciclista).filter(Ciclista.id == ciclista_id).first()
     if not ciclista:
-        raise HTTPException(status_code=400, detail="Ciclista não encontrado")
+        raise HTTPException(status_code=400, detail=CICLISTA_NAO_ENCONTRADO)
 
     for attr, value in dados.model_dump(exclude_unset=True).items():
         setattr(ciclista, attr, value)
@@ -83,7 +79,7 @@ def atualiza_ciclista(ciclista_id: int, dados: CiclistaUpdate, db: Session) -> C
 def ativa_conta_service(ciclista_id: int, db: Session):
     ciclista = db.query(Ciclista).filter(Ciclista.id == ciclista_id).first()
     if not ciclista:
-        raise HTTPException(status_code=400, detail="Ciclista não encontrado")
+        raise HTTPException(status_code=400, detail=CICLISTA_NAO_ENCONTRADO)
 
     ciclista.data_hora_confirmacao = datetime.today()
     ciclista.ativo = True

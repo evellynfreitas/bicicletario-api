@@ -2,6 +2,8 @@ from models import Tranca
 import sys
 import os
 
+TRANCA_NAO_ENCONTRADA = "Tranca não encontrada"
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'equipamento')))
 
 def cadastrar_tranca(request, db):
@@ -17,14 +19,14 @@ def cadastrar_tranca(request, db):
 
         return {"success": True, "detail": "Nova tranca cadastrada com sucesso"}
 
-    except Exception as ex:
+    except Exception:
         return {"success": False, "detail": "Não foi possível cadastrar a nova tranca"}
 
 def editar_tranca(request, db):
     cadastro_tranca = db.query(Tranca).filter(Tranca.numero == request.numero).first()
 
     if cadastro_tranca is None:
-        return {"success": False, "detail": "Tranca não encontrada"}
+        return {"success": False, "detail": TRANCA_NAO_ENCONTRADA}
     
     if request.modelo:
         cadastro_tranca.modelo = request.modelo
@@ -45,7 +47,7 @@ def editar_tranca(request, db):
 def retorna_tranca(numero, db):
     tranca = db.query(Tranca).filter(Tranca.numero == numero).first()
     if tranca is None:
-        return {"success": False, "detail": "Tranca não encontrada"}
+        return {"success": False, "detail": TRANCA_NAO_ENCONTRADA}
     
     return {"success": True, "detail": "Tranca encontrada", "tranca": tranca}
 
@@ -59,7 +61,7 @@ def deleta_tranca(numero, db):
     tranca = db.query(Tranca).filter(Tranca.numero == numero).first()
 
     if tranca is None:
-        return {"success": False, "detail": "Tranca não encontrada"}
+        return {"success": False, "detail": TRANCA_NAO_ENCONTRADA}
     
     db.delete(tranca)
     db.commit()
