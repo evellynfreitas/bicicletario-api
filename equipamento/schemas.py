@@ -49,3 +49,30 @@ class TotemUpdate(BaseModel):
     descricao: Optional[str]
     
     model_config = ConfigDict(from_attributes=True)
+
+
+# Tranca
+class TrancaRequest(BaseModel):
+    modelo: str
+    ano_fabricacao: str
+    localizacao: str
+
+
+class TrancaResponse(BaseModel):
+    numero: int
+    modelo: str
+    ano_fabricacao: str
+    status: str
+    localizacao: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TrancaUpdate(BaseModel):
+    numero: int
+    modelo: Optional[str]
+    ano_fabricacao: Optional[str]
+    localizacao: Optional[str]
+    
+    model_config = ConfigDict(from_attributes=True)
+

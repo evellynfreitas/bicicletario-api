@@ -1,6 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
 
 class Bicicleta(Base):
     __tablename__ = "bicicletas"
@@ -19,3 +18,11 @@ class Totem(Base):
     localizacao = Column(String)
     descricao = Column(String)
 
+class Tranca(Base):
+    __tablename__ = "trancas"
+
+    numero = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    localizacao = Column(String)
+    ano_fabricacao = Column(String)
+    modelo = Column(String)
+    status = Column(String, default="NOVA")
