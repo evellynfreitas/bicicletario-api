@@ -25,5 +25,25 @@ def edita(request: BicicletaUpdate, db: Session = Depends(get_db)):
     
     return result
 
+@router.get("/")
+def lista(db: Session = Depends(get_db)):
+    return lista_bicicletas(db)
 
+@router.get("/{numero}", response_model=BicicletaResponse)
+def retorna(numero: int, db: Session = Depends(get_db)):
+    result = retorna_bicicleta(numero, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result["bicicleta"]
+
+@router.delete("/{numero}")
+def deleta(numero: int, db: Session = Depends(get_db)):
+    result = deleta_bicicleta(numero, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result
 

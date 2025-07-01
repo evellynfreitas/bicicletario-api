@@ -58,14 +58,35 @@ def update_payload():
     }
 
 
-def test_edita_bicicleta_sucesso(update_payload):
+def test_editar_bicicleta_sucesso(update_payload):
     with patch("routers.bicicleta.editar_bicicleta") as mock:
         mock.return_value = {"success": True, "detail": "Bicicleta editada com sucesso"}
         response = client.put("/bicicleta/", json=update_payload)
 
+        assert response.status_code == 200
+        assert response.json()["detail"] == "Bicicleta editada com sucesso"
+
+
+def test_retornar_bicicleta_sucesso():
+    with patch("routers.bicicleta.retorna_bicicleta") as mock:
+        mock.return_value = {"success": True, "bicicleta": {"numero": 1, "marca": "marca teste", "modelo": "modelo testes", "ano": "ano", "status": "NOVO", "localizacao": "Rio de Janeiro - RJ"}}
+        response = client.get("/bicicleta/1")
+        
         print(response.status_code)
         print(response.json())
 
         assert response.status_code == 200
-        assert response.json()["detail"] == "Bicicleta editada com sucesso"
+        assert response.json()["numero"] == 1
+
+
+def test_deletar_bicicleta_sucesso():
+    with patch("routers.bicicleta.deleta_bicicleta") as mock:
+        mock.return_value = {"success": True, "detail": "Bicicleta removida com sucesso"}
+        response = client.delete("/bicicleta/1")
+        
+        print(response.status_code)
+        print(response.json())
+
+        assert response.status_code == 200
+        assert response.json()["detail"] == "Bicicleta removida com sucesso"
 

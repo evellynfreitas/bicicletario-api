@@ -42,7 +42,29 @@ def editar_bicicleta(request, db):
 
     return {"success": True, "detail": "Bicicleta editada com sucesso"}
 
+def retorna_bicicleta(numero, db):
+    bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == numero).first()
+    if bicicleta is None:
+        return {"success": False, "detail": "Bicicleta não encontrado"}
+    
+    return {"success": True, "detail": "Bicicleta encontrada", "bicicleta": bicicleta}
 
+
+def lista_bicicletas(db):
+    bicicletas = db.query(Bicicleta).all()
+    return bicicletas
+
+
+def deleta_bicicleta(numero, db):
+    bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == numero).first()
+
+    if bicicleta is None:
+        return {"success": False, "detail": "Bicicleta não encontrada"}
+    
+    db.delete(bicicleta)
+    db.commit()
+    
+    return {"success": True, "detail": "Bicicleta removida com sucesso"}
 
 
 

@@ -91,7 +91,7 @@ def retorna_funcionario(matricula, db):
     if funcionario is None:
         return {"success": False, "detail": "Funcionário não encontrado"}
     
-    return {"success": True, "detail": "Funcionário não encontrado", "funcionario": funcionario}
+    return {"success": True, "detail": "Funcionário encontrado", "funcionario": funcionario}
 
 
 def lista_funcionarios(db):
