@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import date
 from typing import Optional
 
@@ -11,6 +11,7 @@ class CartaoDeCreditoRequest(BaseModel):
     validade: date
     cvv: str
 
+
 class CartaoDeCreditoResponse(BaseModel):
     id: int
     nome: str
@@ -19,10 +20,11 @@ class CartaoDeCreditoResponse(BaseModel):
     data_nascimento: date
     ativo: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Ciclista
+
 class CiclistaRequest(BaseModel):
     nome: str
     email: str
@@ -33,6 +35,7 @@ class CiclistaRequest(BaseModel):
     data_nascimento: date
     cartao_de_credito: CartaoDeCreditoRequest
 
+
 class CiclistaResponse(BaseModel):
     id: int
     nome: str
@@ -41,8 +44,7 @@ class CiclistaResponse(BaseModel):
     data_nascimento: date
     ativo: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CiclistaUpdate(BaseModel):
@@ -51,11 +53,10 @@ class CiclistaUpdate(BaseModel):
     senha: Optional[str]
     data_nascimento: Optional[date]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-# Funcionario
+# Funcionário
 
 class FuncionarioRequest(BaseModel):
     nome: str
@@ -65,6 +66,7 @@ class FuncionarioRequest(BaseModel):
     senha: str
     data_nascimento: date
 
+
 class FuncionarioResponse(BaseModel):
     matricula: int
     nome: str
@@ -73,8 +75,8 @@ class FuncionarioResponse(BaseModel):
     funcao: str
     data_nascimento: date
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class FuncionarioUpdate(BaseModel):
     matricula: int
@@ -85,5 +87,4 @@ class FuncionarioUpdate(BaseModel):
     cpf: Optional[str]
     data_nascimento: Optional[date]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
