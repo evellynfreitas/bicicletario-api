@@ -11,4 +11,11 @@ class Bicicleta(Base):
     ano = Column(String)
     status = Column(String, default="NOVA")
     localizacao = Column(String, nullable=True)
-    
+
+class Totem(Base):
+    __tablename__ = "totens"
+
+    numero = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    localizacao = Column(String)
+    descricao = Column(String)
+

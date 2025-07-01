@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import bicicleta
+from routers import bicicleta, totem
 from database import engine, Base
 
 app = FastAPI(
@@ -12,6 +12,7 @@ app = FastAPI(
 Base.metadata.create_all(bind=engine)
 
 app.include_router(bicicleta.router)
+app.include_router(totem.router)
 
 @app.get("/")
 async def root():
