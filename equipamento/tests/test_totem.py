@@ -1,87 +1,102 @@
-from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
-from sqlalchemy.orm import Session
-from database import get_db
-from models import Totem
-from main import app
-import pytest
+from unittest.mock import MagicMock
+from services.totem import cadastrar_totem, editar_totem, retorna_totem, lista_totens, deleta_totem, TOTEM_NAO_ENCONTRADO
 
-client = TestClient(app)
+class TotemRequest:
+    def __init__(self, numero=None, localizacao=None, descricao=None):
+        self.numero = numero
+        self.localizacao = localizacao
+        self.descricao = descricao
 
-@pytest.fixture
-def override_get_db():
-    db = MagicMock(spec=Session)
+def test_cadastrar_totem_sucesso():
+    request = TotemRequest(localizacao="Praça Central", descricao="Totem novo")
+    db = MagicMock()
 
-    def refresh_side_effect(obj):
-        # Simula o que seria preenchido após o db.refresh()
-        obj.id = 1
-        obj.ativo = True
-        return obj
+    resultado = cadastrar_totem(request, db)
 
-    db.add.return_value = None
-    db.commit.return_value = None
-    db.refresh.side_effect = refresh_side_effect
+    assert resultado["success"] is True
+    assert resultado["detail"] == "Novo totem cadastrado com sucesso"
+    db.add.assert_called_once()
+    db.commit.assert_called_once()
+    db.refresh.assert_called_once()
+
+def test_cadastrar_totem_falha():
+    request = TotemRequest(localizacao="Praça Central", descricao="Totem novo")
+    db = MagicMock()
+    db.add.side_effect = Exception("Erro")
+
+    resultado = cadastrar_totem(request, db)
+
+    assert resultado["success"] is False
+    assert resultado["detail"] == "Não foi possível cadastrar o novo totem"
+
+def test_editar_totem_sucesso():
+    db = MagicMock()
+    totem_mock = MagicMock()
+    db.query().filter().first.return_value = totem_mock
+
+    request = TotemRequest(numero=1, localizacao="Novo lugar", descricao="Atualizado")
+
+    resultado = editar_totem(request, db)
+
+    assert resultado["success"] is True
+    assert resultado["detail"] == "Totem editado com sucesso"
+    assert totem_mock.localizacao == "Novo lugar"
+    assert totem_mock.descricao == "Atualizado"
+
+def test_editar_totem_nao_encontrado():
+    db = MagicMock()
+    db.query().filter().first.return_value = None
+    request = TotemRequest(numero=1, localizacao="X", descricao="Y")
+
+    resultado = editar_totem(request, db)
+
+    assert resultado["success"] is False
+    assert resultado["detail"] == TOTEM_NAO_ENCONTRADO
+
+def test_retorna_totem_sucesso():
+    db = MagicMock()
+    totem_mock = MagicMock()
+    db.query().filter().first.return_value = totem_mock
+
+    resultado = retorna_totem(123, db)
+
+    assert resultado["success"] is True
+    assert resultado["totem"] == totem_mock
+
+def test_retorna_totem_nao_encontrado():
+    db = MagicMock()
     db.query().filter().first.return_value = None
 
-    def _get_db():
-        return db
+    resultado = retorna_totem(999, db)
 
-    return _get_db
+    assert resultado["success"] is False
+    assert resultado["detail"] == TOTEM_NAO_ENCONTRADO
 
-def test_criar_totem_sucesso(override_get_db):
-    app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
+def test_lista_totens():
+    db = MagicMock()
+    db.query().all.return_value = ["Totem1", "Totem2"]
 
-    payload = {
-        "localizacao": "Rio de Janeiro",
-        "descricao": "Totem localizado no Rio de Janeiro",
-    }
+    resultado = lista_totens(db)
 
-    response = client.post("/totem/", json=payload)
-    assert response.status_code == 200
+    assert resultado == ["Totem1", "Totem2"]
 
-    data = response.json()
-    assert data["success"] == True
-    assert data["detail"] == "Novo totem cadastrado com sucesso"
-    
-    app.dependency_overrides.clear()
+def test_deleta_totem_sucesso():
+    db = MagicMock()
+    totem_mock = MagicMock()
+    db.query().filter().first.return_value = totem_mock
 
+    resultado = deleta_totem(1, db)
 
-@pytest.fixture
-def update_payload():
-    return {
-        "numero": 1,
-        "localizacao": "Rio de Janeiro",
-        "descricao": "Totem localizado no Rio de Janeiro",
-    }
+    assert resultado["success"] is True
+    assert resultado["detail"] == "Totem removido com sucesso"
+    db.delete.assert_called_once_with(totem_mock)
+    db.commit.assert_called_once()
 
+def test_deleta_totem_nao_encontrado():
+    db = MagicMock()
+    db.query().filter().first.return_value = None
 
-def test_editar_totem_sucesso(update_payload):
-    with patch("routers.totem.editar_totem") as mock:
-        mock.return_value = {"success": True, "detail": "Totem editado com sucesso"}
-        response = client.put("/totem/", json=update_payload)
+    resultado = deleta_totem(1, db)
 
-        assert response.status_code == 200
-        assert response.json()["detail"] == "Totem editado com sucesso"
-
-
-def test_retornar_totem_sucesso():
-    with patch("routers.totem.retorna_totem") as mock:
-        mock.return_value = {"success": True, "totem": {"numero": 1, "localizacao": "Rio de Janeiro", "descricao": "Totem localizado no Rio de Janeiro"}}
-        response = client.get("/totem/1")
-        
-        print(response.status_code)
-        print(response.json())
-
-        assert response.status_code == 200
-        assert response.json()["numero"] == 1
-
-
-def test_deletar_totem_sucesso():
-    with patch("routers.totem.deleta_totem") as mock:
-        mock.return_value = {"success": True, "detail": "Totem removido com sucesso"}
-        response = client.delete("/totem/1")
-        
-        assert response.status_code == 200
-        assert response.json()["detail"] == "Totem removido com sucesso"
-
+    assert resultado["success"] is False
+    assert resultado["detail"] == TOTEM_NAO_ENCONTRADO

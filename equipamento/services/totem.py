@@ -61,3 +61,4 @@ def deleta_totem(numero, db):
     db.commit()
     
     return {"success": True, "detail": "Totem removido com sucesso"}
+ 

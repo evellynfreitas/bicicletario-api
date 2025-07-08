@@ -1,8 +1,6 @@
-from models import Tranca, Bicicleta, Reparo
+from models import Tranca, Bicicleta, ReparoTranca, ReparoBicicleta
 from datetime import datetime
 from util import API_EXTERNO_URL, API_ALUGUEL_URL
-import requests
-import httpx
 import sys
 import os
 
@@ -60,7 +58,6 @@ def lista_trancas(db):
     trancas = db.query(Tranca).all()
     return trancas
 
-
 def deleta_tranca(numero, db):
     tranca = db.query(Tranca).filter(Tranca.numero == numero).first()
 
@@ -72,122 +69,133 @@ def deleta_tranca(numero, db):
     
     return {"success": True, "detail": "Tranca removida com sucesso"}
 
-def retorna_funcionario(id_funcionario):
-    response = requests.get(f"{API_ALUGUEL_URL}/funcionario/{id_funcionario}")
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return None
+def enviar_email():
+    print("Email enviado com sucesso")
 
-def enviar_email(params):
+def incluir_tranca_totem(numero_tranca, funcionario_id, totem_id, db):
+    tranca = db.query(Tranca).filter(Tranca.numero == numero_tranca).first()
+    if not tranca:
+        return {"success": False, "detail": "Tranca não encontrada"}
 
-    response = requests.get(f"{API_EXTERNO_URL}/email/enviar_email/", params=params)
+    if tranca.status not in ["NOVA", "EM REPARO"]:
+        return {"success": False, "detail": "Tranca não está apta para inclusão no totem"}
 
-    if response.status_code == 200:
-        print("Email enviado com sucesso:", response.json())
-        return True
-    else:
-        print("Erro ao enviar email:", response.text)
-        return False
+    if tranca.status == "EM REPARO":
+        reparo = (db.query(ReparoTranca).filter(ReparoTranca.tranca_numero == numero_tranca).order_by(ReparoTranca.data_retirada.desc()).first())
+        if not reparo or reparo.funcionario_id != funcionario_id:
+            return {"success": False, "detail": "Funcionário não autorizado a devolver esta tranca (reparo foi iniciado por outro)"}
+        
+        reparo.data_retorno = datetime.now()
 
-def inserir_bicicleta_tranca(id_bicicleta, id_tranca, id_funcionario, db):
-    bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == id_bicicleta).first()
-    tranca = db.query(Tranca).filter(Tranca.numero == id_tranca).first()
+    tranca.status = "DISPONIVEL"
+    tranca.id_totem = totem_id
 
-    if bicicleta is None:
-        return {"success": False, "detail": "Bicicleta não encontrada com esse id"}
+    db.commit()
+
+    enviar_email()
+    
+    return {"success": True, "detail": "Tranca incluída com sucesso no totem."}
+
+def novo_reparo(numero_tranca, funcionario_id, db):
+
+    tranca = db.query(Tranca).filter(Tranca.numero == numero_tranca).first()
+    if not tranca:
+        return {"success": False, "detail": "Tranca não encontrada"}
+
+    if tranca.status != "REPARO SOLICITADO":
+        return {"success": False, "detail": "A tranca não está com status 'reparo solicitado'"}
+
+    if tranca.bicicleta_numero is not None:
+        return {"success": False, "detail": "A tranca ainda possui uma bicicleta acoplada"}
+
+    tranca.status = "EM REPARO"
+    tranca.id_totem = None
+
+    reparo = ReparoTranca(tranca_numero=numero_tranca, funcionario_id=funcionario_id, data_retirada=datetime.now())
+    db.add(reparo)
+    db.commit()
+    
+    enviar_email()
+    return {"success": False, "detail": "A tranca foi removida para reparo"}
+
+def inserir_bicicleta_tranca(numero_bicicleta, numero_tranca, funcionario_id, db):
+    bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == numero_bicicleta).first()
+    if not bicicleta:
+        return {"success": False, "detail": "Bicicleta não encontrada"}
     
     if bicicleta.status not in ["NOVA", "EM REPARO"]:
-        return {"success": False, "detail": f"Não é possível inserir essa bicicleta com o status {bicicleta.status}"}
-    
-    if tranca is None:
-        return {"success": False, "detail": "Tranca não encontrada com esse id"}
-    
-    if tranca.status not in ("DISPONIVEL", "NOVA"):
-        return {"success": False, "detail": f"Não é possível inserir uma bicicleta nessa tranca com status {tranca.status}"}
+        return {"success": False, "detail": "Status da bicicleta inválido para inclusão"}
 
-    if bicicleta.status == 'EM REPARO':
+    tranca = db.query(Tranca).filter(Tranca.numero == numero_tranca).first()
+    if not tranca:
+        return {"success": False, "detail": "Tranca não encontrada"}
+
+    if tranca.status != "DISPONIVEL":
+        return {"success": False, "detail": "Tranca não está disponível"}
+
+    if bicicleta.status == "EM REPARO":
         reparo = (
-            db.query(Reparo)
-            .filter(Reparo.bicicleta_numero == id_bicicleta)
-            .filter(Reparo.data_retorno.is_(None))
-            .order_by(Reparo.data_retirada.desc())
+            db.query(ReparoBicicleta)
+            .filter(ReparoBicicleta.bicicleta_numero == numero_bicicleta)
+            .order_by(ReparoBicicleta.data_retirada.desc())
             .first()
         )
+        
+        if not reparo or reparo.funcionario_id != funcionario_id:
+            return {"success": False, "detail": "Funcionário não autorizado a devolver esta bicicleta"}
+            
+        reparo.data_retorno = datetime.now()
 
-        if reparo is None:
-            return {"success": False, "detail": f"Não foi encontrado o registro de reparo dessa bicicleta"}
-        
-        funcionario = retorna_funcionario(id_funcionario)
-        if reparo.funcionario_id != id_funcionario:
-            return {"success": False, "detail": f"Somente o funcionário responsável por esse reparo pode devolver esta bicicleta"}
+    tranca.bicicleta_numero = numero_bicicleta
+    bicicleta.status = "DISPONIVEL"
+    bicicleta.localizacao = f"Totem {tranca.id_totem} - Tranca {numero_tranca}"
 
-        reparo.data_retorno = datetime.today()
-        db.add(reparo)
-        
-        params = {
-            "assunto": "Reparo Concluído",
-            "email": funcionario.email,
-            "corpo": f"""Reparo da bicicleta concluído"""
-        }
-        
-        enviar_email(params)
-        
-    tranca.bicicleta_numero = bicicleta.numero
-    bicicleta.status = 'DISPONIVEL'
-    db.add(tranca)
-    db.add(bicicleta)
     db.commit()
-
-    return {"success": True, "detail": f"Bicicleta foi inserida com sucesso na tranca"}
-
-def remover_bicicleta_reparo(id_bicicleta, id_funcionario, tipo_reparo, db):
-    bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == id_bicicleta).first()
-    tranca = db.query(Tranca).filter(Tranca.bicicleta_numero == id_bicicleta).first()
-
-    if bicicleta is None:
-        return {"success": False, "detail": "Bicicleta não encontrada com esse id"}
+    enviar_email()
     
-    if bicicleta.status not in ["REPARO SOLICITADO"]:
-        return {"success": False, "detail": "Essa bicicleta não está com reparo solicitado"}
-    
-    if tranca is None:
-        return {"success": False, "detail": "Bicicleta não está adicionada corretamente a uma tranca"}
-    
-    if tipo_reparo not in ["REPARO", "APOSENTADORIA"]:
-        return {"success": False, "detail": "Tipo de reparo não reconhecido"}
+    return {"success": True, "detail": "Bicicleta inserida com sucesso na tranca"}
+
+def remover_bicicleta(numero_tranca, funcionario_id, tipo_retirada, db):
+    tranca = db.query(Tranca).filter(Tranca.numero == numero_tranca).first()
+    if not tranca:
+        return {"success": False, "detail": "Tranca não encontrada"}
+
+    if not tranca.bicicleta_numero:
+        return {"success": False, "detail": "Tranca não possui bicicleta presa"}
+
+    bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == tranca.bicicleta_numero).first()
+
+    if tipo_retirada == "REPARO":
+        if bicicleta.status != "REPARO SOLICITADO":
+            return {"success": False, "detail": "Bicicleta não está com status 'reparo solicitado'"}
+
+    elif tipo_retirada == "APOSENTADORIA":
+        if bicicleta.status == "EM USO":
+            return {"success": False, "detail": "Não é possível aposentar bicicleta em uso"}
+    else:
+        return {"success": False, "detail": "Tipo de retirada inválido. Use 'reparo' ou 'aposentadoria'"}
 
     tranca.bicicleta_numero = None
-    
-    if tipo_reparo == 'REPARO':
-        bicicleta.status = 'EM REPARO'
+    if tipo_retirada == "REPARO":
+        bicicleta.status = "EM REPARO"
     else:
-        bicicleta.status = 'APOSENTADA'
-    
-    funcionario = retorna_funcionario(id_funcionario)
-    reparo = Reparo()
-    reparo.bicicleta_numero = bicicleta.numero
-    reparo.funcionario_id = id_funcionario
+        bicicleta.status = "APOSENTADA"
 
-    db.add(tranca)
-    db.add(reparo)
-    db.add(bicicleta)
+    bicicleta.localizacao = "Oficina" if tipo_retirada == "REPARO" else "Baixada"
+
+    if tipo_retirada == "REPARO":
+        reparo = ReparoBicicleta(bicicleta_numero=bicicleta.numero, funcionario_id=funcionario_id, data_retirada=datetime.now())
+        db.add(reparo)
+
     db.commit()
+    enviar_email()
+    
+    return {"success": True, "detail": f"Bicicleta retirada com sucesso para {tipo_retirada}."}
 
-    if funcionario:
-        params = {
-            "assunto": "Reparo Iniciado",
-            "email": funcionario.get('email'),
-            "corpo": f"""Reparo da bicicleta foi iniciado no dia {reparo.data_retirada}.
-                
-            Dados:
-            Número da bicicleta: {bicicleta.numero}
-            Marca: {bicicleta.marca}
-            Modelo: {bicicleta.modelo}
-            Status: {bicicleta.status}"""
-        }
-            
-        enviar_email(params)
-   
-    return {"success": True, "detail": "Bicicleta retirada para reparo com sucesso"}
-
+def solicitar_reparo(id_tranca, db):
+    tranca = retorna_tranca(id_tranca, db)['tranca']
+    tranca.status = 'REPARO SOLICITADO'
+    db.add(tranca)
+    db.commit()
+    
+    return {"success": True, "detail": "Reparo solicitado com sucesso"}

@@ -28,12 +28,15 @@ class Tranca(Base):
     ano_fabricacao = Column(String)
     modelo = Column(String)
     status = Column(String, default="NOVA")
-
+    
+    id_totem = Column(Integer, ForeignKey("totens.numero"), nullable=True)
+    totem = relationship("Totem", backref="totens")
+    
     bicicleta_numero = Column(Integer, ForeignKey("bicicletas.numero"), nullable=True)
     bicicleta = relationship("Bicicleta", backref="trancas")
 
-class Reparo(Base):
-    __tablename__ = "reparos"
+class ReparoBicicleta(Base):
+    __tablename__ = "reparo_bicicleta"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     bicicleta_numero = Column(Integer, ForeignKey("bicicletas.numero"))
@@ -41,5 +44,16 @@ class Reparo(Base):
     data_retirada = Column(DateTime, default=datetime.now())
     data_retorno = Column(DateTime, nullable=True)
 
-    bicicleta = relationship("Bicicleta")
+    bicicleta = relationship("Bicicleta", backref="reparo_bicicleta")
+
+class ReparoTranca(Base):
+    __tablename__ = "reparo_tranca"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tranca_numero = Column(Integer, ForeignKey("trancas.numero"))
+    funcionario_id = Column(Integer)
+    data_retirada = Column(DateTime, default=datetime.now())
+    data_retorno = Column(DateTime, nullable=True)
+
+    tranca = relationship("Tranca",  backref="reparo_tranca")
 

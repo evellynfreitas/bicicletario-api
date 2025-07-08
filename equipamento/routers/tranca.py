@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from schemas import TrancaRequest, TrancaResponse, TrancaUpdate
 from database import get_db
-from services.tranca import cadastrar_tranca, editar_tranca, lista_trancas, retorna_tranca, deleta_tranca, inserir_bicicleta_tranca, remover_bicicleta_reparo
+from services.tranca import cadastrar_tranca, editar_tranca, lista_trancas, retorna_tranca, deleta_tranca, inserir_bicicleta_tranca, remover_bicicleta, incluir_tranca_totem, novo_reparo, solicitar_reparo
 
 router = APIRouter(prefix="/tranca", tags=["tranca"])
 
@@ -57,8 +57,35 @@ def inserir_bicicleta(id_bicicleta: int, id_tranca: int, id_funcionario: int, db
     return result
 
 @router.post("/remover_bicicleta")
-def remover_bicicleta(id_bicicleta: int, id_funcionario: int, tipo_reparo: str, db: Session = Depends(get_db)):
-    result = remover_bicicleta_reparo(id_bicicleta, id_funcionario, tipo_reparo, db)
+def remover_bicicleta_tranca(id_bicicleta: int, id_funcionario: int, tipo_reparo: str, db: Session = Depends(get_db)):
+    result = remover_bicicleta(id_bicicleta, id_funcionario, tipo_reparo, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result
+
+@router.post("/inserir_totem")
+def inserir_tranca(id_tranca: int, id_funcionario: int, id_totem: int, db: Session = Depends(get_db)):
+    result = incluir_tranca_totem(id_tranca, id_funcionario, id_totem, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result
+
+@router.post("/reparo")
+def reparo(id_tranca: int, id_funcionario: int, db: Session = Depends(get_db)):
+    result = novo_reparo(id_tranca, id_funcionario, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result
+
+@router.post("/solicitar_reparo")
+def solicita_reparo_tranca(id_tranca: int, db: Session = Depends(get_db)):
+    result = solicitar_reparo(id_tranca, db)
 
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["detail"])

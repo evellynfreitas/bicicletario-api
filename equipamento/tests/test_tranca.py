@@ -1,105 +1,137 @@
-import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
-from sqlalchemy.orm import Session
-from database import get_db
-from main import app
+from unittest.mock import MagicMock, patch
+from services.tranca import cadastrar_tranca, editar_tranca, retorna_tranca, lista_trancas, deleta_tranca, incluir_tranca_totem, novo_reparo, inserir_bicicleta_tranca, remover_bicicleta, solicitar_reparo
 
-# ---------- Fixtures e helpers ----------
 
-@pytest.fixture
-def test_client():
-    return TestClient(app)
+def test_cadastrar_tranca_sucesso():
+    db = MagicMock()
+    request = MagicMock(modelo="Modelo A", ano_fabricacao=2022, localizacao="Local A")
+    result = cadastrar_tranca(request, db)
+    assert result["success"]
+    db.add.assert_called_once()
+    db.commit.assert_called_once()
 
-@pytest.fixture
-def tranca_payload():
-    return {
-        "modelo": "Modelo 007",
-        "ano_fabricacao": "2024",
-        "localizacao": "Rio de Janeiro - RJ",
-    }
+def test_cadastrar_tranca_falha():
+    db = MagicMock()
+    db.add.side_effect = Exception("Erro")
+    request = MagicMock()
+    result = cadastrar_tranca(request, db)
+    assert not result["success"]
 
-@pytest.fixture
-def update_payload():
-    return {
-        "numero": 1,
-        "modelo": "Modelo 007",
-        "ano_fabricacao": "2024",
-        "localizacao": "Rio de Janeiro - RJ",
-    }
+def test_editar_tranca_sucesso():
+    db = MagicMock()
+    tranca_mock = MagicMock()
+    db.query().filter().first.return_value = tranca_mock
+    request = MagicMock(numero=1, modelo="Novo Modelo", ano_fabricacao=2020, localizacao="Nova Local")
+    result = editar_tranca(request, db)
+    assert result["success"]
+    assert tranca_mock.modelo == "Novo Modelo"
 
-@pytest.fixture
-def override_get_db():
-    db = MagicMock(spec=Session)
-
-    def refresh_side_effect(obj):
-        obj.id = 1
-        obj.ativo = True
-        return obj
-
-    db.add.return_value = None
-    db.commit.return_value = None
-    db.refresh.side_effect = refresh_side_effect
+def test_editar_tranca_nao_encontrada():
+    db = MagicMock()
     db.query().filter().first.return_value = None
+    request = MagicMock(numero=99)
+    result = editar_tranca(request, db)
+    assert not result["success"]
 
-    def _get_db():
-        return db
-    return _get_db
+def test_retorna_tranca_sucesso():
+    db = MagicMock()
+    tranca_mock = MagicMock()
+    db.query().filter().first.return_value = tranca_mock
+    result = retorna_tranca(1, db)
+    assert result["success"]
+    assert result["tranca"] == tranca_mock
 
-def mock_response_success(detail, extra_data=None):
-    base = {"success": True, "detail": detail}
-    if extra_data:
-        base.update(extra_data)
-    return base
+def test_retorna_tranca_erro():
+    db = MagicMock()
+    db.query().filter().first.return_value = None
+    result = retorna_tranca(1, db)
+    assert not result["success"]
 
-# ---------- Testes ----------
+def test_lista_trancas():
+    db = MagicMock()
+    db.query().all.return_value = [1, 2, 3]
+    result = lista_trancas(db)
+    assert result == [1, 2, 3]
 
-class TestTrancaRoutes:
+def test_deleta_tranca_sucesso():
+    db = MagicMock()
+    tranca = MagicMock()
+    db.query().filter().first.return_value = tranca
+    result = deleta_tranca(1, db)
+    assert result["success"]
+    db.delete.assert_called_once_with(tranca)
 
-    def test_criar_tranca_sucesso(self, test_client, tranca_payload, override_get_db):
-        app.dependency_overrides[get_db] = override_get_db
+def test_deleta_tranca_erro():
+    db = MagicMock()
+    db.query().filter().first.return_value = None
+    result = deleta_tranca(1, db)
+    assert not result["success"]
 
-        response = test_client.post("/tranca/", json=tranca_payload)
+@patch("services.tranca.enviar_email")
+def test_incluir_tranca_totem(mock_email):
+    db = MagicMock()
+    tranca = MagicMock(status="NOVA")
+    db.query().filter().first.return_value = tranca
+    result = incluir_tranca_totem(1, 123, 321, db)
+    assert result["success"]
+    assert tranca.status == "DISPONIVEL"
+    assert tranca.id_totem == 321
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert data["detail"] == "Nova tranca cadastrada com sucesso"
+@patch("services.tranca.enviar_email")
+def test_novo_reparo(mock_email):
+    db = MagicMock()
+    tranca = MagicMock(status="REPARO SOLICITADO", bicicleta_numero=None)
+    db.query().filter().first.return_value = tranca
+    result = novo_reparo(1, 10, db)
+    assert result["detail"] == "A tranca foi removida para reparo"
+    assert tranca.status == "EM REPARO"
 
-        app.dependency_overrides.clear()
+@patch("services.tranca.enviar_email")
+def test_inserir_bicicleta_tranca(mock_email):
+    db = MagicMock()
 
-    def test_editar_tranca_sucesso(self, test_client, update_payload):
-        with patch("routers.tranca.editar_tranca") as mock:
-            mock.return_value = mock_response_success("Tranca editada com sucesso")
+    bicicleta = MagicMock(status="NOVA")
+    tranca = MagicMock(status="DISPONIVEL", id_totem=99)
 
-            response = test_client.put("/tranca/", json=update_payload)
+    # Mock para bicicleta
+    bicicleta_query = MagicMock()
+    bicicleta_query.filter.return_value.first.return_value = bicicleta
+    # Mock para tranca
+    tranca_query = MagicMock()
+    tranca_query.filter.return_value.first.return_value = tranca
 
-            assert response.status_code == 200
-            assert response.json()["detail"] == "Tranca editada com sucesso"
+    db.query.side_effect = [bicicleta_query, tranca_query]
+    
+    result = inserir_bicicleta_tranca(1, 2, 10, db)
+    assert result["success"]
+    assert bicicleta.status == "DISPONIVEL"
+    assert tranca.bicicleta_numero == 1
 
-    def test_retornar_tranca_sucesso(self, test_client):
-        with patch("routers.tranca.retorna_tranca") as mock:
-            mock.return_value = {
-                "success": True,
-                "tranca": {
-                    "numero": 1,
-                    "modelo": "Modelo 007",
-                    "ano_fabricacao": "2024",
-                    "localizacao": "Rio de Janeiro - RJ",
-                    "status": "NOVA"
-                }
-            }
+@patch("services.tranca.enviar_email")
+def test_remover_bicicleta_reparo(mock_email):
+    db = MagicMock()
+    tranca = MagicMock(bicicleta_numero=123)
+    bicicleta = MagicMock(numero=123, status="REPARO SOLICITADO")
 
-            response = test_client.get("/tranca/1")
+    tranca_query = MagicMock()
+    tranca_query.filter.return_value.first.return_value = tranca
 
-            assert response.status_code == 200
-            assert response.json()["numero"] == 1
+    bicicleta_query = MagicMock()
+    bicicleta_query.filter.return_value.first.return_value = bicicleta
 
-    def test_deletar_tranca_sucesso(self, test_client):
-        with patch("routers.tranca.deleta_tranca") as mock:
-            mock.return_value = mock_response_success("Tranca removida com sucesso")
+    db.query.side_effect = [tranca_query, bicicleta_query]
 
-            response = test_client.delete("/tranca/1")
+    result = remover_bicicleta(1, 10, "REPARO", db)
+    assert result["success"]
+    assert bicicleta.status == "EM REPARO"
+    assert bicicleta.localizacao == "Oficina"
 
-            assert response.status_code == 200
-            assert response.json()["detail"] == "Tranca removida com sucesso"
+@patch("services.tranca.retorna_tranca")
+def test_solicitar_reparo(mock_retorna):
+    db = MagicMock()
+    tranca = MagicMock()
+    mock_retorna.return_value = {"tranca": tranca}
+    result = solicitar_reparo(1, db)
+    assert result["success"]
+    assert tranca.status == "REPARO SOLICITADO"
+    db.commit.assert_called_once()
