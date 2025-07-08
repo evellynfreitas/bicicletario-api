@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from models import Ciclista, CartaoDeCredito
-from schemas import CiclistaRequest, CiclistaUpdate
+from schemas import CiclistaRequest, CiclistaUpdate, CartaoDeCreditoRequest, CartaoDeCreditoResponse
 from datetime import datetime
 import re
 
@@ -85,4 +85,36 @@ def ativa_conta_service(ciclista_id: int, db: Session):
     ciclista.ativo = True
     db.commit()
     db.refresh(ciclista)
+    return {"success": True}
+
+def valida_cartao():
+    print("Cartão validado")
+    
+def alterar_cartao_credito(id_ciclista, cartao_dados, db):
+
+    ciclista = db.query(Ciclista).filter(Ciclista.id == id_ciclista).first()
+    if not ciclista or not ciclista.ativo:
+        raise HTTPException(status_code=404, detail="Ciclista não encontrado ou inativo")
+
+    valida_cartao()
+
+    cartao_existente = db.query(CartaoDeCredito).filter(CartaoDeCredito.id_ciclista == id_ciclista).first()
+
+    if cartao_existente:
+        cartao_existente.numero_cartao = cartao_dados.numero_cartao
+        cartao_existente.nome_titular = cartao_dados.nome_titular
+        cartao_existente.validade = cartao_dados.validade
+        cartao_existente.cvv = cartao_dados.cvv
+    else:
+        novo_cartao = CartaoDeCredito(
+            id_ciclista=id_ciclista,
+            numero_cartao=cartao_dados.numero_cartao,
+            nome_titular=cartao_dados.nome_titular,
+            validade=cartao_dados.validade,
+            cvv=cartao_dados.cvv
+        )
+        db.add(novo_cartao)
+
+    db.commit()
+    
     return {"success": True}

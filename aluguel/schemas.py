@@ -88,3 +88,10 @@ class FuncionarioUpdate(BaseModel):
     data_nascimento: Optional[date]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Aluguel
+
+class AluguelRequest(BaseModel):
+    id_ciclista: int
+    id_bicicleta: int
