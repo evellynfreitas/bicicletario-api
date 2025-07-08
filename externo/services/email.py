@@ -1,8 +1,8 @@
 from util import EMAIL_USER, EMAIL_PASSWORD
+import yagmail
 
 def enviar_gmail(destinatario, assunto, mensagem):
     try:
-        import yagmail
         print(EMAIL_PASSWORD, EMAIL_USER)
 
         yag = yagmail.SMTP(user=EMAIL_USER, password=EMAIL_PASSWORD)

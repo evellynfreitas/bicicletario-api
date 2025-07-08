@@ -1,32 +1,29 @@
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+
 from unittest.mock import patch, MagicMock
+from util import EMAIL_USER, EMAIL_PASSWORD
 from services.email import enviar_gmail
 
-# Caso de sucesso
-@patch("services.email.yagmail.SMTP")  # mocka o SMTP
-def test_enviar_gmail_sucesso(mock_smtp):
-    mock_instance = MagicMock()
-    mock_smtp.return_value = mock_instance
 
-    resultado = enviar_gmail(
-        destinatario="teste@email.com",
-        assunto="Assunto de Teste",
-        mensagem="Mensagem teste"
-    )
+@patch("services.email.yagmail.SMTP")
+def test_enviar_gmail_sucesso(mock_smtp):
+    mock_yag = MagicMock()
+    mock_smtp.return_value = mock_yag
+
+    resultado = enviar_gmail("destino@email.com", "Assunto Teste", "Mensagem Teste")
 
     assert resultado is True
-    mock_instance.send.assert_called_once_with(
-        to="teste@email.com",
-        subject="Assunto de Teste",
-        contents="Mensagem teste"
+    mock_smtp.assert_called_once_with(user=EMAIL_USER, password=EMAIL_PASSWORD)
+    mock_yag.send.assert_called_once_with(
+        to="destino@email.com",
+        subject="Assunto Teste",
+        contents="Mensagem Teste"
     )
 
-# Caso de erro
-@patch("services.email.yagmail.SMTP", side_effect=Exception("Falha ao enviar"))
+
+@patch("services.email.yagmail.SMTP", side_effect=Exception("Erro no SMTP"))
 def test_enviar_gmail_falha(mock_smtp):
-    resultado = enviar_gmail(
-        destinatario="teste@email.com",
-        assunto="Assunto de Teste",
-        mensagem="Mensagem teste"
-    )
-
+    resultado = enviar_gmail("destino@email.com", "Assunto Teste", "Mensagem Teste")
     assert resultado is False
