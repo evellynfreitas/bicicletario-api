@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from schemas import TotemRequest, TotemResponse, TotemUpdate
+from schemas import TotemRequest, TotemResponse, TotemUpdate, BicicletaRequest
 from database import get_db
 from services.totem import cadastrar_totem, editar_totem, lista_totens, retorna_totem, deleta_totem
 
@@ -46,4 +46,3 @@ def deleta(numero: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=result["detail"])
     
     return result
-

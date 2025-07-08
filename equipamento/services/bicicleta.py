@@ -67,6 +67,12 @@ def deleta_bicicleta(numero, db):
     return {"success": True, "detail": "Bicicleta removida com sucesso"}
 
 
+def solicita_reparo_bicicleta(id_bicicleta, db):
+    bicicleta = retorna_bicicleta(id_bicicleta, db)["bicicleta"]
 
+    bicicleta.status = "REPARO SOLICITADO"
+    db.add(bicicleta)
+    db.commit()
 
+    return {"success": True, "detail": "Reparo solicitado com sucesso"}
 

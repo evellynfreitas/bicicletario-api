@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from schemas import BicicletaRequest, BicicletaResponse, BicicletaUpdate
 from database import get_db
-from services.bicicleta import cadastrar_bicicleta, editar_bicicleta, lista_bicicletas, retorna_bicicleta, deleta_bicicleta
+from services.bicicleta import cadastrar_bicicleta, editar_bicicleta, lista_bicicletas, retorna_bicicleta, deleta_bicicleta, solicita_reparo_bicicleta
 
 router = APIRouter(prefix="/bicicleta", tags=["bicicleta"])
 
@@ -47,3 +47,11 @@ def deleta(numero: int, db: Session = Depends(get_db)):
     
     return result
 
+@router.post("/novo_reparo")
+def solicita_reparo(id_bicicleta: int, db: Session = Depends(get_db)):
+    result = solicita_reparo_bicicleta(id_bicicleta, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result

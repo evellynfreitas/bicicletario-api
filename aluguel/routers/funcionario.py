@@ -6,6 +6,15 @@ from services.funcionario import lista_funcionarios, cadastra_funcionario, edita
 
 router = APIRouter(prefix="/funcionario", tags=["funcionario"])
 
+@router.get("/{matricula}", response_model=FuncionarioResponse)
+def retorna(matricula: int, db: Session = Depends(get_db)):
+    result = retorna_funcionario(matricula, db)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["detail"])
+    
+    return result["funcionario"]
+
 @router.get("/")
 def retorna_funcionarios(db: Session = Depends(get_db)):
     return lista_funcionarios(db)
@@ -27,15 +36,6 @@ def edita(request: FuncionarioUpdate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=result["detail"])
     
     return result
-
-@router.get("/{matricula}", response_model=FuncionarioResponse)
-def retorna(matricula: int, db: Session = Depends(get_db)):
-    result = retorna_funcionario(matricula, db)
-
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["detail"])
-    
-    return result["funcionario"]
 
 @router.delete("/{matricula}")
 def deleta(matricula: int, db: Session = Depends(get_db)):

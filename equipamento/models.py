@@ -1,5 +1,7 @@
 from database import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from datetime import datetime
 
 class Bicicleta(Base):
     __tablename__ = "bicicletas"
@@ -26,3 +28,18 @@ class Tranca(Base):
     ano_fabricacao = Column(String)
     modelo = Column(String)
     status = Column(String, default="NOVA")
+
+    bicicleta_numero = Column(Integer, ForeignKey("bicicletas.numero"), nullable=True)
+    bicicleta = relationship("Bicicleta", backref="trancas")
+
+class Reparo(Base):
+    __tablename__ = "reparos"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bicicleta_numero = Column(Integer, ForeignKey("bicicletas.numero"))
+    funcionario_id = Column(Integer)
+    data_retirada = Column(DateTime, default=datetime.now())
+    data_retorno = Column(DateTime, nullable=True)
+
+    bicicleta = relationship("Bicicleta")
+
