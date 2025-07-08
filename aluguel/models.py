@@ -50,7 +50,7 @@ class Aluguel(Base):
     id_bicicleta = Column(Integer, nullable=False)
     tranca_inicial = Column(Integer, nullable=False)
     hora_inicio = Column(DateTime, default=datetime.today())
-    hora_fim = Column(DateTime, default=datetime.today())
+    hora_fim = Column(DateTime, nullable=True)
     cobranca = Column(Float)
     
     ciclista = relationship("Ciclista")

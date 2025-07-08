@@ -51,8 +51,9 @@ def novo_aluguel(id_ciclista, id_bicicleta, id_tranca, db):
     return {"success": True, "detail": "Novo aluguel cadastrado com sucesso"}
 
 def devolucao(id_bicicleta, id_tranca, db):
+    print(id_bicicleta)
     aluguel = db.query(Aluguel).filter(Aluguel.id_bicicleta == id_bicicleta, Aluguel.hora_fim == None).first()
-
+    
     if aluguel is None:
         return {"success": False, "detail": "Não encontrei um aluguel em andamento para essa bicicleta"}
     
