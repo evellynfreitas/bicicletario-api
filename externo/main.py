@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import email
+from routers import email, cartao
 
 app = FastAPI(
     title="API Externa",
@@ -11,6 +11,7 @@ app = FastAPI(
 # Base.metadata.create_all(bind=engine)
 
 app.include_router(email.router)
+app.include_router(cartao.router)
 
 @app.get("/")
 async def root():
