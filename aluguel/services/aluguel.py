@@ -5,7 +5,7 @@ from datetime import datetime
 from services.ciclista import busca_ciclista_por_id
 
 
-def verifica_tranca(id_tranca):
+def verifica_tranca():
     print("Tranca verificada")
 
 def verifica_alugueis_ciclista(id_ciclista, db):
@@ -38,7 +38,7 @@ def novo_aluguel(id_ciclista, id_bicicleta, id_tranca, db):
     if result['success'] == False:
         return result
     
-    verifica_tranca(id_tranca)
+    verifica_tranca()
     remove_bicicleta_da_tranca(id_bicicleta, id_tranca)
     
     aluguel = Aluguel(id_ciclista = id_ciclista, id_bicicleta = id_bicicleta, tranca_inicial=id_tranca)
