@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from routers import email, cartao
+from routers import email, cartao, cobraca
+from database import engine, Base
 
 app = FastAPI(
     title="API Externa",
@@ -8,10 +9,11 @@ app = FastAPI(
 )
 
 # Cria as tabelas no banco de dados
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app.include_router(email.router)
 app.include_router(cartao.router)
+app.include_router(cobraca.router)
 
 @app.get("/")
 async def root():

@@ -3,8 +3,9 @@ from util import EMAIL_USER, EMAIL_PASSWORD
 def enviar_gmail(destinatario, assunto, mensagem):
     try:
         import yagmail
+        print(EMAIL_PASSWORD, EMAIL_USER)
 
-        yag = yagmail.SMTP(EMAIL_USER, EMAIL_PASSWORD)
+        yag = yagmail.SMTP(user=EMAIL_USER, password=EMAIL_PASSWORD)
 
         yag.send(
             to=destinatario,
@@ -13,5 +14,6 @@ def enviar_gmail(destinatario, assunto, mensagem):
         )
         return True
     
-    except Exception:
+    except Exception as ex:
+        print(ex)
         return False
