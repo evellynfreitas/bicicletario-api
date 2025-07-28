@@ -66,13 +66,13 @@ def processa_cobrancas(db):
             email = ciclista.get("email")
         else:
             return {"success": False, "detail": f"Não foi possível encontrar o ciclista com id {cobranca.ciclista}"} 
-        titulo = 'Nova Cobrança'
-        mensagem = f'Nova cobrança! \nValor: {cobranca.valor}\nStatus: {cobranca.status}\nHora Solicitação: {cobranca.hora_solicitacao}'
-
+        cobranca.status = 'PAGA'
+        cobranca.hora_finalizacao = datetime.now()
+        db.add(cobranca)
+        titulo = 'Cobrança Paga'
+        mensagem = f'Cobrança Paga! \nValor: {cobranca.valor}\nStatus: {cobranca.status}\nHora Solicitação: {cobranca.hora_solicitacao} \nHora Finalização: {cobranca.hora_finalizacao}'
+        
         if enviar_gmail(email, titulo, mensagem):
-            cobranca.status = 'PAGA'
-            cobranca.hora_finalizacao = datetime.now()
-            db.add(cobranca)
             db.commit()
         else:
             return {"success": False, "detail": "Não foi possível enviar o email"}
