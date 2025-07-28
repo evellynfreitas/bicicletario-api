@@ -1,6 +1,8 @@
 from models import Cobranca
 from datetime import datetime
 from services.email import enviar_gmail
+from util import API_ALUGUEL_URL
+import requests
 
 def cadastrar_cobranca(request, db):
     try:
@@ -55,15 +57,23 @@ def processa_cobrancas(db):
     cobrancas = db.query(Cobranca).filter(Cobranca.status == 'PENDENTE').all()
     
     if cobrancas is None:
-        return {"success": False, "detail": "Não foi encontrado nenhuma cobrança pendente"}
+        return {"success": True, "detail": "Não há nenhuma cobrança pendente"}
 
     for cobranca in cobrancas:
-        email = 'evellyndfreitas@gmail.com'
+        response = requests.get(f"{API_ALUGUEL_URL}/ciclista/{cobranca.ciclista}")
+        if response.ok:
+            ciclista = response.json()
+            email = ciclista.get("email")
+        else:
+            return {"success": False, "detail": f"Não foi possível encontrar o ciclista com id {cobranca.ciclista}"} 
         titulo = 'Nova Cobrança'
         mensagem = f'Nova cobrança! \nValor: {cobranca.valor}\nStatus: {cobranca.status}\nHora Solicitação: {cobranca.hora_solicitacao}'
-        
+
         if enviar_gmail(email, titulo, mensagem):
-            print("Email enviado")
+            cobranca.status = 'PAGA'
+            cobranca.hora_finalizacao = datetime.now()
+            db.add(cobranca)
+            db.commit()
         else:
             return {"success": False, "detail": "Não foi possível enviar o email"}
     

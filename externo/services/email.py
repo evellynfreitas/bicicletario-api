@@ -3,7 +3,6 @@ import yagmail
 
 def enviar_gmail(destinatario, assunto, mensagem):
     try:
-        print(EMAIL_PASSWORD, EMAIL_USER)
 
         yag = yagmail.SMTP(user=EMAIL_USER, password=EMAIL_PASSWORD)
 
