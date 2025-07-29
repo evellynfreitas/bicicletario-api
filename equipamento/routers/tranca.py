@@ -57,8 +57,8 @@ def inserir_bicicleta(id_bicicleta: int, id_tranca: int, id_funcionario: int, db
     return result
 
 @router.post("/remover_bicicleta")
-def remover_bicicleta_tranca(id_bicicleta: int, id_funcionario: int, tipo_reparo: str, db: Session = Depends(get_db)):
-    result = remover_bicicleta(id_bicicleta, id_funcionario, tipo_reparo, db)
+def remover_bicicleta_tranca(id_tranca: int, id_funcionario: int, tipo_retirada: str, db: Session = Depends(get_db)):
+    result = remover_bicicleta(id_tranca, id_funcionario, tipo_retirada, db)
 
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["detail"])

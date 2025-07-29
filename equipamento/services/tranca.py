@@ -1,6 +1,7 @@
 from models import Tranca, Bicicleta, ReparoTranca, ReparoBicicleta
 from datetime import datetime
 from util import API_EXTERNO_URL, API_ALUGUEL_URL
+import requests
 import sys
 import os
 
@@ -9,6 +10,21 @@ EM_REPARO = "EM REPARO"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'equipamento')))
 
+def envia_email(email, titulo, corpo):
+    params = {
+        "email": email,
+        "assunto": titulo, 
+        "corpo": corpo
+    }
+
+    response = requests.get(f"{API_EXTERNO_URL}/email/enviar_email/", params=params)
+    
+    if response.ok:
+        return True
+
+    else:
+        return False
+    
 def cadastrar_tranca(request, db):
     try:
         nova_tranca = Tranca(
@@ -54,7 +70,6 @@ def retorna_tranca(numero, db):
     
     return {"success": True, "detail": "Tranca encontrada", "tranca": tranca}
 
-
 def lista_trancas(db):
     trancas = db.query(Tranca).all()
     return trancas
@@ -69,9 +84,6 @@ def deleta_tranca(numero, db):
     db.commit()
     
     return {"success": True, "detail": "Tranca removida com sucesso"}
-
-def enviar_email():
-    print("Email enviado com sucesso")
 
 def incluir_tranca_totem(numero_tranca, funcionario_id, totem_id, db):
     tranca = db.query(Tranca).filter(Tranca.numero == numero_tranca).first()
@@ -88,14 +100,21 @@ def incluir_tranca_totem(numero_tranca, funcionario_id, totem_id, db):
         
         reparo.data_retorno = datetime.now()
 
+    funcionario = requests.get("{API_ALUGUEL_URL}/funcionario/{funcionario_id}")
+    funcionario = funcionario.json()
+
     tranca.status = "DISPONIVEL"
     tranca.id_totem = totem_id
-
-    db.commit()
-
-    enviar_email()
     
-    return {"success": True, "detail": "Tranca incluída com sucesso no totem."}
+    mensagem = f"""
+        A tranca {numero_tranca} foi inserida com sucesso no totem {totem_id} às {datetime.now()}.
+    """
+
+    if envia_email(funcionario.email, "Tranca inserida", mensagem):
+        db.commit()
+        return {"success": True, "detail": "Tranca incluída com sucesso no totem."}
+    else:
+        return {"success": False, "detail": "Não foi possível enviar o email para o funcionário."}
 
 def novo_reparo(numero_tranca, funcionario_id, db):
 
@@ -114,10 +133,19 @@ def novo_reparo(numero_tranca, funcionario_id, db):
 
     reparo = ReparoTranca(tranca_numero=numero_tranca, funcionario_id=funcionario_id, data_retirada=datetime.now())
     db.add(reparo)
-    db.commit()
+
+    funcionario = requests.get("{API_ALUGUEL_URL}/funcionario/{funcionario_id}")
+    funcionario = funcionario.json()
     
-    enviar_email()
-    return {"success": False, "detail": "A tranca foi removida para reparo"}
+    mensagem = f"""
+        A tranca {numero_tranca} foi retirada para reparo.
+    """
+
+    if envia_email(funcionario.email, "Reparo Tranca", mensagem):
+        db.commit()
+        return {"success": True, "detail": "Tranca foi removida para reparo."}
+    else:
+        return {"success": False, "detail": "Não foi possível enviar o email para o funcionário."}
 
 def inserir_bicicleta_tranca(numero_bicicleta, numero_tranca, funcionario_id, db):
     bicicleta = db.query(Bicicleta).filter(Bicicleta.numero == numero_bicicleta).first()
@@ -151,10 +179,18 @@ def inserir_bicicleta_tranca(numero_bicicleta, numero_tranca, funcionario_id, db
     bicicleta.status = "DISPONIVEL"
     bicicleta.localizacao = f"Totem {tranca.id_totem} - Tranca {numero_tranca}"
 
-    db.commit()
-    enviar_email()
+    funcionario = requests.get("{API_ALUGUEL_URL}/funcionario/{funcionario_id}")
+    funcionario = funcionario.json()
     
-    return {"success": True, "detail": "Bicicleta inserida com sucesso na tranca"}
+    mensagem = f"""
+        A bicicleta {bicicleta.id} foi inserida com sucesso na tranca {numero_tranca}.
+    """
+
+    if envia_email(funcionario.email, "Inserção Bicicleta", mensagem):
+        db.commit()
+        return {"success": True, "detail": "Bicicleta inserida com sucesso na tranca"}
+    else:
+        return {"success": False, "detail": "Não foi possível enviar o email para o funcionário."}
 
 def remover_bicicleta(numero_tranca, funcionario_id, tipo_retirada, db):
     tranca = db.query(Tranca).filter(Tranca.numero == numero_tranca).first()
@@ -188,10 +224,19 @@ def remover_bicicleta(numero_tranca, funcionario_id, tipo_retirada, db):
         reparo = ReparoBicicleta(bicicleta_numero=bicicleta.numero, funcionario_id=funcionario_id, data_retirada=datetime.now())
         db.add(reparo)
 
-    db.commit()
-    enviar_email()
+    funcionario = requests.get("{API_ALUGUEL_URL}/funcionario/{funcionario_id}")
+    funcionario = funcionario.json()
     
-    return {"success": True, "detail": f"Bicicleta retirada com sucesso para {tipo_retirada}."}
+    mensagem = f"""
+        A bicicleta {bicicleta.id} foi removida da tranca {numero_tranca} para {tipo_retirada}.
+    """
+
+    if envia_email(funcionario.email, "Remoção Bicicleta", mensagem):
+        db.commit()
+        return {"success": True, "detail": f"Bicicleta retirada com sucesso para {tipo_retirada}."}
+    else:
+        return {"success": False, "detail": "Não foi possível enviar o email para o funcionário."}
+
 
 def solicitar_reparo(id_tranca, db):
     tranca = retorna_tranca(id_tranca, db)['tranca']
