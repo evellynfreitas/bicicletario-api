@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import Ciclista, CartaoDeCredito
 from schemas import CiclistaRequest, CiclistaUpdate, CartaoDeCreditoRequest, CartaoDeCreditoResponse
 from datetime import datetime
+from util import API_EQUIPAMENTO_URL, API_EXTERNO_URL
 import re
 
 CICLISTA_NAO_ENCONTRADO = "Ciclista não encontrado"
@@ -19,9 +20,22 @@ def valida_documento(nacionalidade: str, cpf: str, passaporte: str) -> bool:
         return cpf is not None
     return passaporte is not None
 
-def envia_email_cadastro(email: str):
-    print(f"Enviei o email de confirmação para {email}.")
+def envia_email(email, titulo, corpo):
+    import requests
+    params = {
+        "email": email,
+        "assunto": titulo, 
+        "corpo": corpo
+    }
 
+    response = requests.get(f"{API_EXTERNO_URL}/email/enviar_email/", params=params)
+    
+    if response.ok:
+        return True
+
+    else:
+        return False
+    
 def cria_ciclista(request: CiclistaRequest, db: Session) -> Ciclista:
     if verifica_email_cadastrado(request.email, db):
         raise HTTPException(status_code=400, detail="Email já cadastrado")
@@ -54,9 +68,12 @@ def cria_ciclista(request: CiclistaRequest, db: Session) -> Ciclista:
     )
     db.add(novo_cartao)
     db.commit()
-
-    envia_email_cadastro(request.email)
-    return novo_ciclista
+    
+    if envia_email(novo_ciclista.email, "Boas vindas", "Bem vindo ao Bicicletario"):
+        db.commit()
+        return novo_ciclista
+    else:
+        return {"success": False, "detail": "Não foi possível cadastrar o usuário."}
 
 def busca_ciclista_por_id(ciclista_id: int, db: Session) -> Ciclista:
     ciclista = db.query(Ciclista).filter(Ciclista.id == ciclista_id).first()

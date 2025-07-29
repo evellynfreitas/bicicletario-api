@@ -73,3 +73,118 @@ def devolucao(id_bicicleta, id_tranca, db):
     
     return {"success": True, "detail": "Bicicleta devolvida com sucesso"}
  
+
+def resetar_banco_de_dados():
+    from models import Ciclista, CartaoDeCredito, Funcionario, Aluguel
+    from database import Base, engine
+    from sqlalchemy.orm import Session
+    from datetime import datetime, date, timedelta
+
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    session = Session(bind=engine)
+
+    ciclistas_dados = [
+        {
+            "id": 1,
+            "nome": "Fulano Beltrano",
+            "email": "user@example.com",
+            "nacionalidade": "Brasileiro",
+            "cpf": "78804034009",
+            "senha": "ABC123",
+            "data_nascimento": date(2021, 5, 2),
+            "ativo": True,
+            "data_hora_confirmacao": datetime.now(),
+        },
+        {
+            "id": 2,
+            "nome": "Fulano Beltrano",
+            "email": "user2@example.com",
+            "nacionalidade": "Brasileiro",
+            "cpf": "43943488039",
+            "senha": "ABC123",
+            "data_nascimento": date(2021, 5, 2),
+            "ativo": False,
+            "data_hora_confirmacao": None,
+        },
+        {
+            "id": 3,
+            "nome": "Fulano Beltrano",
+            "email": "user3@example.com",
+            "nacionalidade": "Brasileiro",
+            "cpf": "10243164084",
+            "senha": "ABC123",
+            "data_nascimento": date(2021, 5, 2),
+            "ativo": True,
+            "data_hora_confirmacao": datetime.now(),
+        },
+        {
+            "id": 4,
+            "nome": "Fulano Beltrano",
+            "email": "user4@example.com",
+            "nacionalidade": "Brasileiro",
+            "cpf": "30880150017",
+            "senha": "ABC123",
+            "data_nascimento": date(2021, 5, 2),
+            "ativo": True,
+            "data_hora_confirmacao": datetime.now(),
+        },
+    ]
+
+    for dados in ciclistas_dados:
+        ciclista = Ciclista(**dados)
+        session.add(ciclista)
+        session.flush()
+
+        cartao = CartaoDeCredito(
+            id_ciclista=ciclista.id,
+            numero_cartao="4012001037141112",
+            nome_titular="Fulano Beltrano",
+            validade=date(2022, 12, 1),
+            cvv="132",
+        )
+        session.add(cartao)
+
+    funcionario = Funcionario(
+        matricula=12345,
+        nome="Beltrano",
+        email="employee@example.com",
+        cpf="99999999999",
+        funcao="Reparador",
+        senha="123",
+        data_nascimento=date.today().replace(year=date.today().year - 25)  # idade ~25 anos
+    )
+
+    session.add(funcionario)
+    
+    alugueis = [
+        Aluguel(
+            id_ciclista=3,
+            id_bicicleta=3,
+            tranca_inicial=2,
+            hora_inicio=datetime.now(),
+            cobranca=1.0,
+        ),
+        Aluguel(
+            id_ciclista=4,
+            id_bicicleta=5,
+            tranca_inicial=4,
+            hora_inicio=datetime.now() - timedelta(hours=2),
+            cobranca=2.0,
+        ),
+        Aluguel(
+            id_ciclista=3,
+            id_bicicleta=1,
+            tranca_inicial=1,
+            hora_inicio=datetime.now() - timedelta(hours=2),
+            hora_fim=datetime.now(),
+            cobranca=3.0
+        ),
+    ]
+
+    session.add_all(alugueis)
+
+    session.commit()
+    session.close()
+    
